@@ -1,11 +1,19 @@
 package com.devsuperior.bds02.controllers;
 
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.devsuperior.bds02.entities.City;
+import com.devsuperior.bds02.entities.Event;
+import com.devsuperior.bds02.repositories.CityRepository;
+import com.devsuperior.bds02.repositories.EventRepository;
+import com.devsuperior.bds02.services.CityService;
+import com.devsuperior.bds02.services.exception.DatabaseException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.devsuperior.bds02.dto.CityDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -29,18 +39,17 @@ public class CityControllerIT {
 	
 	@Autowired
 	private ObjectMapper objectMapper;
-	
 	@Test
 	public void findAllShouldReturnAllResourcesSortedByName() throws Exception {
 		
 		ResultActions result =
-				mockMvc.perform(get("/cities")
+				mockMvc.perform(get("/cities?sort=name,asc")
 					.contentType(MediaType.APPLICATION_JSON));
 
 		result.andExpect(status().isOk());
-		result.andExpect(jsonPath("$[0].name").value("Belo Horizonte"));
-		result.andExpect(jsonPath("$[1].name").value("Belém"));
-		result.andExpect(jsonPath("$[2].name").value("Brasília"));
+		result.andExpect(jsonPath("$.content[0].name").value("Belo Horizonte"));
+		result.andExpect(jsonPath("$.content[1].name").value("Belém"));
+		result.andExpect(jsonPath("$.content[2].name").value("Brasília"));
 	}
 	
 	@Test
@@ -86,9 +95,8 @@ public class CityControllerIT {
 	@Test
 	@Transactional(propagation = Propagation.NEVER) 
 	public void deleteShouldReturnBadRequestWhenDependentId() throws Exception {		
-
 		Long dependentId = 1L;
-		
+
 		ResultActions result =
 				mockMvc.perform(delete("/cities/{id}", dependentId));
 				
